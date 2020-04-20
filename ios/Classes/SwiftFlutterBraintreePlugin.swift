@@ -11,7 +11,7 @@ public class SwiftFlutterBraintreePlugin: NSObject, FlutterPlugin, BTViewControl
     
     
     public static func register(with registrar: FlutterPluginRegistrar) {
-        let channel = FlutterMethodChannel(name: "flutter_braintree.drop_in", binaryMessenger: registrar.messenger())
+        let channel = FlutterMethodChannel(name: "flutter_braintree.custom", binaryMessenger: registrar.messenger())
         
         let instance = SwiftFlutterBraintreePlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
@@ -125,15 +125,17 @@ public class SwiftFlutterBraintreePlugin: NSObject, FlutterPlugin, BTViewControl
     // Mark - BTViewControllerPresentingDelegate, BTAppSwitchDelegate
     public func paymentDriver(_ driver: Any, requestsPresentationOf viewController: UIViewController) {
         print(#function)
-        
+        UIApplication.shared.keyWindow?.rootViewController?.present(viewController, animated: true, completion: nil)
     }
     
     public func paymentDriver(_ driver: Any, requestsDismissalOf viewController: UIViewController) {
         print(#function)
+         viewController.dismiss(animated: true, completion: nil)
     }
     
     public func appSwitcherWillPerformAppSwitch(_ appSwitcher: Any) {
         print(#function)
+       
     }
     
     public func appSwitcher(_ appSwitcher: Any, didPerformSwitchTo target: BTAppSwitchTarget) {
