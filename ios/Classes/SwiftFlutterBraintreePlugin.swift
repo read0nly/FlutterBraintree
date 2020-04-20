@@ -3,7 +3,9 @@ import UIKit
 import Braintree
 import BraintreeDropIn
 
-public class SwiftFlutterBraintreePlugin: NSObject, FlutterPlugin {
+public class SwiftFlutterBraintreePlugin: NSObject, FlutterPlugin, BTViewControllerPresentingDelegate, BTAppSwitchDelegate {
+    
+    
     
     var isHandlingResult: Bool = false
     
@@ -14,7 +16,7 @@ public class SwiftFlutterBraintreePlugin: NSObject, FlutterPlugin {
         let instance = SwiftFlutterBraintreePlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
-
+    
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         if call.method == "start" {
@@ -35,7 +37,7 @@ public class SwiftFlutterBraintreePlugin: NSObject, FlutterPlugin {
             if let vaultManagerEnabled = bool(for: "vaultManagerEnabled", in: call) {
                 dropInRequest.vaultManager = vaultManagerEnabled
             }
-
+            
             let clientToken = string(for: "clientToken", in: call)
             let tokenizationKey = string(for: "tokenizationKey", in: call)
             
@@ -57,8 +59,28 @@ public class SwiftFlutterBraintreePlugin: NSObject, FlutterPlugin {
                 isHandlingResult = false
                 return
             }
-                
+            
             UIApplication.shared.keyWindow?.rootViewController?.present(existingDropInController, animated: true, completion: nil)
+        }
+        else if call.method == "requestPaypalNonce" {
+            guard let request = map(for: "request", in: call),
+                let amount = request["amount"] as? String,
+                let authorization = string(for: "authorization", in: call),
+                let braintreeClient = BTAPIClient(authorization: authorization)
+                else {
+                    return
+            }
+            let payPalDriver = BTPayPalDriver(apiClient: braintreeClient)
+            payPalDriver.viewControllerPresentingDelegate = self
+            payPalDriver.appSwitchDelegate = self
+            let payPalRequest = BTPayPalRequest(amount: amount)
+            payPalDriver.requestOneTimePayment(payPalRequest) { (tokenizedPayPalAccount, error) -> Void in
+                
+                print(#function)
+                print("tokenizedPayPalAccount:\(tokenizedPayPalAccount),error:\(error)")
+                
+            }
+            
         }
         else {
             result(FlutterMethodNotImplemented)
@@ -85,7 +107,7 @@ public class SwiftFlutterBraintreePlugin: NSObject, FlutterPlugin {
         }
     }
     
-
+    
     private func string(for key: String, in call: FlutterMethodCall) -> String? {
         return (call.arguments as? [String: Any])?[key] as? String
     }
@@ -93,6 +115,33 @@ public class SwiftFlutterBraintreePlugin: NSObject, FlutterPlugin {
     
     private func bool(for key: String, in call: FlutterMethodCall) -> Bool? {
         return (call.arguments as? [String: Any])?[key] as? Bool
+    }
+    
+    private func map(for key: String, in call: FlutterMethodCall) -> [String:Any]? {
+        return (call.arguments as? [String: Any])?[key] as? [String:Any]
+    }
+    
+    
+    // Mark - BTViewControllerPresentingDelegate, BTAppSwitchDelegate
+    public func paymentDriver(_ driver: Any, requestsPresentationOf viewController: UIViewController) {
+        print(#function)
+        
+    }
+    
+    public func paymentDriver(_ driver: Any, requestsDismissalOf viewController: UIViewController) {
+        print(#function)
+    }
+    
+    public func appSwitcherWillPerformAppSwitch(_ appSwitcher: Any) {
+        print(#function)
+    }
+    
+    public func appSwitcher(_ appSwitcher: Any, didPerformSwitchTo target: BTAppSwitchTarget) {
+        print(#function)
+    }
+    
+    public func appSwitcherWillProcessPaymentInfo(_ appSwitcher: Any) {
+        print(#function)
     }
     
 }
